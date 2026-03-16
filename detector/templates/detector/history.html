@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}История проверок{% endblock %}
+{% block content %}
+<section class="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
+    <div class="flex items-end justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold">История проверок</h1>
+            <p class="mt-2 text-slate-400">Последние 50 анализов, сохраненных в базе.</p>
+        </div>
+        <a href="{% url 'detector:home' %}" class="rounded-2xl bg-sky-500 px-4 py-3 text-sm font-semibold text-white hover:bg-sky-400">Новая проверка</a>
+    </div>
+    <div class="mt-6 overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-800 text-left text-sm">
+            <thead>
+                <tr class="text-slate-400">
+                    <th class="py-3 pr-4">Дата</th>
+                    <th class="py-3 pr-4">Файл</th>
+                    <th class="py-3 pr-4">Статус</th>
+                    <th class="py-3 pr-4">Confidence</th>
+                    <th class="py-3 pr-4">Final score</th>
+                    <th class="py-3 pr-4"></th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800">
+                {% for check in checks %}
+                    <tr>
+                        <td class="py-4 pr-4 text-slate-300">{{ check.uploaded_at|date:'d.m.Y H:i' }}</td>
+                        <td class="py-4 pr-4 font-medium">{{ check.original_filename }}</td>
+                        <td class="py-4 pr-4">
+                            <span class="rounded-full bg-slate-800 px-3 py-1 text-xs text-slate-200">{{ check.get_verdict_display|default:'Pending' }}</span>
+                        </td>
+                        <td class="py-4 pr-4">{{ check.confidence }}%</td>
+                        <td class="py-4 pr-4">{{ check.final_score }}%</td>
+                        <td class="py-4 pr-0"><a href="{% url 'detector:result' check.pk %}" class="text-sky-400 hover:text-sky-300">Открыть</a></td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" class="py-10 text-center text-slate-400">Пока нет сохраненных проверок.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

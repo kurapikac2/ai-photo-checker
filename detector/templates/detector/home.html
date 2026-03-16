@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Проверка изображения{% endblock %}
+{% block content %}
+<section class="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+    <div class="rounded-3xl border border-slate-800 bg-slate-900/80 p-8 shadow-2xl shadow-sky-950/20">
+        <p class="mb-3 inline-flex rounded-full bg-sky-500/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-sky-300">AI + локальный forensic анализ</p>
+        <h1 class="text-4xl font-bold tracking-tight">Проверь изображение на признаки AI-генерации и редактирования</h1>
+        <p class="mt-4 max-w-2xl text-slate-300">Загрузи картинку и получи отчет с локальным анализом метаданных, ELA, визуальных артефактов и итоговой оценкой риска.</p>
+        <div class="mt-8 grid gap-4 sm:grid-cols-3">
+            <div class="rounded-2xl border border-slate-800 bg-slate-950/60 p-4"><p class="text-sm text-slate-400">Форматы</p><p class="mt-2 font-semibold">JPG, PNG, WEBP</p></div>
+            <div class="rounded-2xl border border-slate-800 bg-slate-950/60 p-4"><p class="text-sm text-slate-400">Лимит</p><p class="mt-2 font-semibold">До 10 МБ</p></div>
+            <div class="rounded-2xl border border-slate-800 bg-slate-950/60 p-4"><p class="text-sm text-slate-400">Отчет</p><p class="mt-2 font-semibold">Причины + score</p></div>
+        </div>
+    </div>
+
+    <div class="rounded-3xl border border-slate-800 bg-white p-6 text-slate-900 shadow-2xl shadow-black/20">
+        <form method="post" action="{% url 'detector:check' %}" enctype="multipart/form-data" class="space-y-5">
+            {% csrf_token %}
+            <div>
+                <h2 class="text-2xl font-semibold">Загрузить изображение</h2>
+                <p class="mt-2 text-sm text-slate-500">Перетащи файл в зону ниже или выбери его вручную.</p>
+            </div>
+            <label class="flex min-h-64 cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50 p-6 text-center hover:border-sky-500 hover:bg-sky-50">
+                <span class="mb-3 text-5xl">🖼️</span>
+                <span class="font-semibold">Нажми, чтобы выбрать изображение</span>
+                <span class="mt-2 text-sm text-slate-500">JPG, JPEG, PNG, WEBP до 10MB</span>
+                {{ form.original_image }}
+            </label>
+            {% if form.original_image.errors %}
+                <div class="rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-600">{{ form.original_image.errors|striptags }}</div>
+            {% endif %}
+            <button type="submit" class="w-full rounded-2xl bg-slate-950 px-5 py-4 font-semibold text-white transition hover:bg-sky-600">Проверить изображение</button>
+            <p class="text-xs text-slate-500">Сервис оценивает признаки, а не гарантирует абсолютную достоверность.</p>
+        </form>
+    </div>
+</section>
+{% endblock %}
