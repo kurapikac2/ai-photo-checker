@@ -18,10 +18,10 @@ Python, Django, SQLite, Pillow, OpenCV, NumPy, and OpenRouter API.
 
 ## Run locally
 
-Clone the repository, open a terminal in the project folder, and create a virtual environment:
+Use Python 3.11 or 3.12 with the pinned dependencies below. Clone the repository, open a terminal in the project folder, and create a virtual environment:
 
 ```powershell
-py -m venv .venv
+py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 Copy-Item .env.example .env
 ```
@@ -36,6 +36,22 @@ Set up the database and start Django:
 ```
 
 Then open `http://127.0.0.1:8000/`.
+
+Uploads are limited to 10 MiB and 20 million pixels by default. Set
+`MAX_UPLOAD_SIZE_MB` and `MAX_UPLOAD_PIXELS` in `.env` to adjust these limits.
+The form verifies the actual image format and decodes pixels before saving;
+damaged images and Pillow decompression-bomb warnings are rejected.
+
+## Checks and tests
+
+```powershell
+.\.venv\Scripts\python.exe manage.py check
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+```
+
+GitHub Actions runs these checks on Python 3.11 and 3.12. Tests cover score
+normalization, API-failure scoring fallback, and image upload validation using
+generated images. They do not call OpenRouter or measure detection accuracy.
 
 ## Main routes
 
@@ -62,11 +78,11 @@ Most of the application logic lives under `detector/services/`; request handling
 - Image-processing techniques such as ELA can be misleading after resizing or recompression.
 - Uploaded images and results are stored locally. The history endpoint is not access-controlled in this prototype; do not use it with private images or deploy it publicly as-is.
 - The default Django settings are intended for local development, not production.
-- Automated tests and a deployment-ready configuration are planned improvements.
+- Tests cover scoring and uploads; access-control and external API integration tests and a deployment-ready configuration remain future work.
 
 ## Next improvements
 
-- Add tests for invalid uploads, parsing failures, and score boundaries.
+- Add tests for upstream parsing failures and non-finite score values.
 - Protect analysis history and set a retention policy for uploads.
 - Remove the legacy API-key-file fallback and harden production settings.
 - Publish sample results using non-sensitive images and document false positives.
