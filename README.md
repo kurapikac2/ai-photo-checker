@@ -52,7 +52,7 @@ damaged images and Pillow decompression-bomb warnings are rejected.
 GitHub Actions runs these checks on Python 3.11 and 3.12. Tests cover score
 normalization, API-failure scoring fallback, and image upload validation using
 generated images. Database/client tests cover session ownership, protected media,
-expiry, deletion, CSRF, consent and safe errors. They do not call OpenRouter or
+expiry, deletion, CSRF, consent, non-finite scores and malformed upstream replies. They mock OpenRouter and do not
 measure detection accuracy. Django creates and destroys an isolated test database.
 
 ## Main routes
@@ -112,7 +112,7 @@ separate operator cleanup. Do not use shared browser sessions for private images
 
 ## Next improvements
 
-- Add tests for upstream parsing failures and non-finite score values.
+- Validate model behavior against an independent labeled image dataset.
 - Add deployment-specific rate limits and schedule the retention command.
 - Remove the legacy API-key-file fallback and harden production settings.
 - Publish sample results using non-sensitive images and document false positives.
