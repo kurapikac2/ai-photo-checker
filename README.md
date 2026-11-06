@@ -93,7 +93,7 @@ erase data. The operator must schedule cleanup; preview first:
 ```
 
 Users can delete their accessible records earlier from the result page. Storage
-deletion failures keep the database row for retry. Backups and any copies retained
+errors that raise an exception keep the database row for retry. Backups and any copies retained
 by an external provider are outside this command's scope.
 
 **Upgrade:** run `manage.py migrate`. Existing records are preserved without an

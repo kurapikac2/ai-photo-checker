@@ -45,6 +45,6 @@ class ImageCheck(models.Model):
         return f'{self.original_filename or self.original_image.name} - {self.verdict or "pending"}'
 
     def delete_with_image(self):
-        # Keep the row available for retry if storage deletion fails.
+        # Keep the row for retry if storage raises an error.
         self.original_image.delete(save=False)
         self.delete()
