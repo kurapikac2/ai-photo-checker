@@ -30,6 +30,10 @@
                 <div class="rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-600">{{ form.original_image.errors|striptags }}</div>
             {% endif %}
             <button type="submit" class="w-full rounded-2xl bg-slate-950 px-5 py-4 font-semibold text-white transition hover:bg-sky-600">Проверить изображение</button>
+            <label class="block text-sm text-slate-600">
+                {{ form.allow_external_analysis }} Разрешить отправку исходного изображения, включая метаданные, в OpenRouter и выбранную модель для AI-анализа.
+            </label>
+            <p class="text-xs text-slate-500">Без согласия анализ выполняется локально. Результат доступен только в этой сессии браузера в течение {{ retention_hours|default:24 }} часов. Его можно удалить раньше. Очистка cookies лишит доступа. Администратор сервера имеет доступ к сохранённым данным; физическое удаление зависит от расписания очистки сервера.</p>
             <p class="text-xs text-slate-500">Сервис оценивает признаки, а не гарантирует абсолютную достоверность.</p>
         </form>
     </div>

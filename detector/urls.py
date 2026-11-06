@@ -8,4 +8,6 @@ urlpatterns = [
     path('check/', views.check_image, name='check'),
     path('result/<int:pk>/', views.result_view, name='result'),
     path('history/', views.history_view, name='history'),
+    path('image/<int:pk>/', views.image_view, name='image'),
+    path('delete/<int:pk>/', views.delete_view, name='delete'),
 ]

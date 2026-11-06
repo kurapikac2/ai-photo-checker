@@ -17,6 +17,7 @@ class ImageCheck(models.Model):
     ]
 
     original_filename = models.CharField(max_length=255, blank=True)
+    owner_token = models.CharField(max_length=64, blank=True, default='', db_index=True, editable=False)
     original_image = models.ImageField(upload_to=upload_image_path)
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
@@ -42,3 +43,8 @@ class ImageCheck(models.Model):
 
     def __str__(self):
         return f'{self.original_filename or self.original_image.name} - {self.verdict or "pending"}'
+
+    def delete_with_image(self):
+        # Keep the row available for retry if storage deletion fails.
+        self.original_image.delete(save=False)
+        self.delete()
