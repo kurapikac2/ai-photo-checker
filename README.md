@@ -1,51 +1,74 @@
 # Fake Image Checker
 
-Django MVP для проверки изображений на признаки AI-генерации, редактирования и визуальных аномалий.
+A Django prototype for exploring image authenticity signals. It combines local checks (metadata, error-level analysis, and visual artifacts) with an optional vision-model review through OpenRouter.
 
-## Что умеет
+**Important:** The result is a heuristic assessment, not proof that an image is genuine, edited, or AI-generated. Scores should not be used for high-stakes decisions.
 
-- загрузка JPG, PNG, WEBP
-- проверка размера и базовой сигнатуры файла
-- локальный анализ EXIF, ELA и простых визуальных артефактов
-- отправка изображения в vision-модель через OpenRouter
-- сохранение результатов в SQLite
-- страницы результата, истории и Django admin
+## What it does
 
-## Запуск
+- Accepts JPG, PNG, and WEBP uploads.
+- Checks file metadata and basic image-level signals.
+- Optionally asks a vision model to describe suspicious details.
+- Combines the checks into a result with reasons and individual scores.
+- Stores previous analyses in SQLite and provides a history page.
 
-1. Создай и активируй виртуальное окружение.
-2. Установи зависимости:
+## Tech stack
 
-```powershell
-pip install -r requirements.txt
-```
+Python, Django, SQLite, Pillow, OpenCV, NumPy, and OpenRouter API.
 
-3. Прогони миграции:
+## Run locally
+
+Clone the repository, open a terminal in the project folder, and create a virtual environment:
 
 ```powershell
-python manage.py migrate
+py -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+Copy-Item .env.example .env
 ```
 
-4. Создай админа:
+Open `.env` and configure `OPENROUTER_API_KEY` if you want the external vision-model step. Without a key, the application reports that the model check is unavailable.
+
+Set up the database and start Django:
 
 ```powershell
-python manage.py createsuperuser
+.\.venv\Scripts\python.exe manage.py migrate
+.\.venv\Scripts\python.exe manage.py runserver
 ```
 
-5. Запусти сервер:
+Then open `http://127.0.0.1:8000/`.
 
-```powershell
-python manage.py runserver
-```
+## Main routes
 
-## Маршруты
+| Route | Purpose |
+| --- | --- |
+| `/` | Upload an image |
+| `/check/` | Process a submitted image (POST) |
+| `/result/<id>/` | Show an analysis result |
+| `/history/` | View recent analyses |
+| `/admin/` | Django administration |
 
-- `/` — главная
-- `/check/` — POST-проверка
-- `/result/<id>/` — результат
-- `/history/` — история
-- `/admin/` — админка
+## How the analysis works
 
-## Примечание
+1. Django validates and saves the uploaded file.
+2. Local analysis extracts metadata and calculates image heuristics.
+3. If configured, the server sends the image to the OpenRouter model.
+4. The scoring module combines the results and stores an explanation in SQLite.
 
-OpenRouter API key читается из `.env`. Если `.env` удалить, приложение попробует взять ключ из файла `txt` в корне проекта.
+Most of the application logic lives under `detector/services/`; request handling is in `detector/views.py`.
+
+## Current limitations
+
+- No independently validated accuracy benchmark; displayed probabilities are estimates, not calibrated measurements.
+- Image-processing techniques such as ELA can be misleading after resizing or recompression.
+- Uploaded images and results are stored locally. The history endpoint is not access-controlled in this prototype; do not use it with private images or deploy it publicly as-is.
+- The default Django settings are intended for local development, not production.
+- Automated tests and a deployment-ready configuration are planned improvements.
+
+## Next improvements
+
+- Add tests for invalid uploads, parsing failures, and score boundaries.
+- Protect analysis history and set a retention policy for uploads.
+- Remove the legacy API-key-file fallback and harden production settings.
+- Publish sample results using non-sensitive images and document false positives.
+
+This repository is a learning project and a working prototype, not a forensic verification service.
