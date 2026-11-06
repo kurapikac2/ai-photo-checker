@@ -28,6 +28,18 @@ class OpenRouterParsingTests(unittest.TestCase):
         self.assertNotIn('raw_text', result)
 
     @patch('detector.services.openrouter_client.requests.post')
+    def test_non_string_verdict_keeps_other_valid_fields(self, post):
+        response = Mock(ok=True)
+        response.json.return_value = {'choices': [{'message': {'content':
+            '{"verdict":[],"confidence":25,"reasons":["visible detail"]}'
+        }}]}
+        post.return_value = response
+        result = _run_openrouter_once('encoded', 'key')
+        self.assertEqual(result['verdict'], 'uncertain')
+        self.assertEqual(result['confidence'], 25)
+        self.assertEqual(result['reasons'], ['visible detail'])
+
+    @patch('detector.services.openrouter_client.requests.post')
     def test_http_failure_does_not_reveal_upstream_body(self, post):
         post.return_value = Mock(ok=False, status_code=502, text='secret-upstream-body')
         result = _run_openrouter_once('encoded', 'key')

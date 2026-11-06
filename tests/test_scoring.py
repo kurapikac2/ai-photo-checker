@@ -23,6 +23,16 @@ class ScoreNormalizationTests(unittest.TestCase):
 
 
 class FinalScoreTests(unittest.TestCase):
+    def test_small_local_scores_do_not_expand_to_percentages(self):
+        result = calculate_final_score(
+            {"metadata_score": 0, "ela_score": 1, "artifact_score": 0,
+             "details": {"artifacts": {"noise_inconsistency": 0.8}}},
+            {"error": "openrouter_failure", "reasons": [], "visual_signs": []},
+        )
+        self.assertEqual(result["verdict"], "uncertain")
+        self.assertLess(result["final_score"], 25)
+        self.assertEqual(result["manipulation_probability"], 1)
+
     def test_nonfinite_local_scores_and_malformed_reasons_are_safe(self):
         result = calculate_final_score(
             {"metadata_score": math.nan, "ela_score": math.inf,

@@ -19,6 +19,16 @@ def _clamp(value):
     return max(0, min(100, int(round(_normalize_probability(value)))))
 
 
+def _local_score(value):
+    try:
+        numeric = float(value)
+    except (TypeError, ValueError, OverflowError):
+        return 0
+    if not math.isfinite(numeric):
+        return 0
+    return max(0, min(100, int(round(numeric))))
+
+
 def _textual_signal(reasons, visual_signs):
     reason_text = ' '.join(str(item).lower() for item in reasons)
     signs_text = ' '.join(str(item).lower() for item in visual_signs)
@@ -73,26 +83,26 @@ def calculate_final_score(local_result, ai_result):
     ai_generation_probability = _clamp(ai_result.get('ai_generation_probability', 0))
     ai_manipulation_probability = _clamp(ai_result.get('manipulation_probability', 0))
     ai_signal = max(ai_confidence, ai_generation_probability, ai_manipulation_probability)
-    metadata_score = _clamp(local_result.get('metadata_score', 0))
-    ela_score = _clamp(local_result.get('ela_score', 0))
-    artifact_score = _clamp(local_result.get('artifact_score', 0))
+    metadata_score = _local_score(local_result.get('metadata_score', 0))
+    ela_score = _local_score(local_result.get('ela_score', 0))
+    artifact_score = _local_score(local_result.get('artifact_score', 0))
     local_reasons = _safe_text_list(local_result.get('reasons', []))
     ai_reasons = _safe_text_list(ai_result.get('reasons', []))
     visual_signs = _safe_text_list(ai_result.get('visual_signs', []))
 
-    local_signal = _clamp(
+    local_signal = _local_score(
         0.35 * metadata_score +
         0.30 * ela_score +
         0.35 * artifact_score
     )
 
-    final_score = _clamp(
+    final_score = _local_score(
         0.55 * ai_signal +
         0.45 * local_signal
     )
 
     ai_probability = ai_generation_probability or ai_signal
-    manipulation_probability = ai_manipulation_probability or _clamp(max(ela_score, artifact_score))
+    manipulation_probability = ai_manipulation_probability or _local_score(max(ela_score, artifact_score))
     textual_signal = _textual_signal(ai_reasons, visual_signs)
 
     raw_verdict = ai_result.get('verdict', 'uncertain')
@@ -106,9 +116,9 @@ def calculate_final_score(local_result, ai_result):
     
     artifact_details = local_result.get('details', {}).get('artifacts', {})
     advanced_forensics = (
-        _clamp(artifact_details.get('noise_inconsistency', 0)) > 65 or
-        _clamp(artifact_details.get('frequency_anomaly', 0)) > 75 or
-        _clamp(artifact_details.get('copy_move_score', 0)) > 50
+        _local_score(artifact_details.get('noise_inconsistency', 0)) > 65 or
+        _local_score(artifact_details.get('frequency_anomaly', 0)) > 75 or
+        _local_score(artifact_details.get('copy_move_score', 0)) > 50
     )
 
     if advanced_forensics:
@@ -147,13 +157,13 @@ def calculate_final_score(local_result, ai_result):
         final_score = _clamp(max(final_score, 55))
 
     if ai_failed:
-        local_only_score = _clamp(max(metadata_score, ela_score, artifact_score, final_score))
+        local_only_score = _local_score(max(metadata_score, ela_score, artifact_score, final_score))
         if local_only_score >= 60:
             verdict = 'suspicious'
             final_score = max(final_score, local_only_score)
         else:
             verdict = 'uncertain'
-        confidence = _clamp(max(final_score, local_only_score))
+        confidence = _local_score(max(final_score, local_only_score))
     elif verdict == 'uncertain':
         verdict = default_verdict
         confidence = max(final_score, ai_confidence)

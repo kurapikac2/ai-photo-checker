@@ -144,7 +144,9 @@ def _run_openrouter_once(encoded_image, api_key):
         parsed = _extract_json_payload(text_content)
         if not isinstance(parsed, dict):
             raise ValueError('Model response must be an object.')
-        if parsed.get('verdict') not in {'real', 'suspicious', 'ai_generated', 'edited', 'uncertain'}:
+        if not isinstance(parsed.get('verdict'), str) or parsed['verdict'] not in {
+            'real', 'suspicious', 'ai_generated', 'edited', 'uncertain',
+        }:
             parsed['verdict'] = 'uncertain'
         for field in ('reasons', 'visual_signs'):
             items = parsed.get(field, [])
