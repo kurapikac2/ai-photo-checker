@@ -40,6 +40,7 @@ class ValidatedImageField(forms.ImageField):
 
 class ImageUploadForm(forms.ModelForm):
     original_image = ValidatedImageField()
+    allow_external_analysis = forms.BooleanField(required=False)
 
     class Meta:
         model = ImageCheck

@@ -33,4 +33,4 @@ jobs:
         run: python manage.py check
 
       - name: Scoring and upload validation tests
-        run: python -m unittest discover -s tests -v
+        run: python manage.py test tests --verbosity 2
