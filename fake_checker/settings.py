@@ -73,6 +73,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MAX_UPLOAD_SIZE_BYTES = int(float(os.getenv('MAX_UPLOAD_SIZE_MB', '10')) * 1024 * 1024)
+MAX_UPLOAD_PIXELS = int(os.getenv('MAX_UPLOAD_PIXELS', '20000000'))
 OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY', '')
 OPENROUTER_MODEL = os.getenv('OPENROUTER_MODEL', 'google/gemini-2.5-pro')
 OPENROUTER_ANALYSIS_RUNS = max(1, int(os.getenv('OPENROUTER_ANALYSIS_RUNS', '2')))

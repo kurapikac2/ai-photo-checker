@@ -1,26 +1,49 @@
-import imghdr
+import warnings
+
 from django import forms
 from django.conf import settings
+from PIL import Image, UnidentifiedImageError
+
 from .models import ImageCheck
 
 
+class ValidatedImageField(forms.ImageField):
+    def to_python(self, data):
+        uploaded = forms.FileField.to_python(self, data)
+        if uploaded is None:
+            return None
+        if uploaded.size > settings.MAX_UPLOAD_SIZE_BYTES:
+            raise forms.ValidationError('Файл превышает допустимый размер.')
+
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter('error', Image.DecompressionBombWarning)
+                uploaded.seek(0)
+                with Image.open(uploaded) as image:
+                    if image.format not in {'JPEG', 'PNG', 'WEBP'}:
+                        raise forms.ValidationError('Допустимы только JPG, JPEG, PNG или WEBP.')
+                    if image.width * image.height > settings.MAX_UPLOAD_PIXELS:
+                        raise forms.ValidationError('Изображение содержит слишком много пикселей.')
+                    image.verify()
+                uploaded.seek(0)
+                with Image.open(uploaded) as image:
+                    image.load()
+                uploaded.seek(0)
+                uploaded = super().to_python(uploaded)
+        except (UnidentifiedImageError, OSError, ValueError, SyntaxError,
+                Image.DecompressionBombWarning, Image.DecompressionBombError) as exc:
+            raise forms.ValidationError('Изображение повреждено или небезопасно для обработки.') from exc
+        finally:
+            uploaded.seek(0)
+        return uploaded
+
+
 class ImageUploadForm(forms.ModelForm):
+    original_image = ValidatedImageField()
+
     class Meta:
         model = ImageCheck
         fields = ['original_image']
-
-    def clean_original_image(self):
-        uploaded = self.cleaned_data['original_image']
-        if uploaded.size > settings.MAX_UPLOAD_SIZE_BYTES:
-            raise forms.ValidationError('Файл слишком большой. Максимум 10 МБ.')
-
-        header = uploaded.read(512)
-        uploaded.seek(0)
-        image_type = imghdr.what(None, header)
-        allowed = {'jpeg', 'png', 'webp'}
-        if image_type not in allowed:
-            raise forms.ValidationError('Допустимы только JPG, JPEG, PNG или WEBP.')
-        return uploaded
 
     def save(self, commit=True):
         instance = super().save(commit=False)
