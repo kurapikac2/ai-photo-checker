@@ -4,6 +4,7 @@ These tests exercise the pure-Python scoring logic without external API calls.
 """
 
 import unittest
+import math
 
 from detector.services.scoring import _clamp, calculate_final_score
 
@@ -17,9 +18,32 @@ class ScoreNormalizationTests(unittest.TestCase):
         self.assertEqual(_clamp(140), 100)
         self.assertEqual(_clamp(None), 0)
         self.assertEqual(_clamp("invalid"), 0)
+        for value in (math.nan, math.inf, -math.inf, 10**1000):
+            self.assertEqual(_clamp(value), 0)
 
 
 class FinalScoreTests(unittest.TestCase):
+    def test_small_local_scores_do_not_expand_to_percentages(self):
+        result = calculate_final_score(
+            {"metadata_score": 0, "ela_score": 1, "artifact_score": 0,
+             "details": {"artifacts": {"noise_inconsistency": 0.8}}},
+            {"error": "openrouter_failure", "reasons": [], "visual_signs": []},
+        )
+        self.assertEqual(result["verdict"], "uncertain")
+        self.assertLess(result["final_score"], 25)
+        self.assertEqual(result["manipulation_probability"], 1)
+
+    def test_nonfinite_local_scores_and_malformed_reasons_are_safe(self):
+        result = calculate_final_score(
+            {"metadata_score": math.nan, "ela_score": math.inf,
+             "artifact_score": "bad", "reasons": ["local", {"not": "text"}]},
+            {"verdict": "uncertain", "confidence": math.nan,
+             "ai_generation_probability": math.inf, "reasons": {"bad": "shape"},
+             "visual_signs": None},
+        )
+        self.assertEqual(result["final_score"], 0)
+        self.assertEqual(result["reasons"], ["local"])
+
     def test_missing_api_key_produces_uncertain_verdict_without_local_evidence(self):
         result = calculate_final_score(
             {"metadata_score": 0, "ela_score": 0, "artifact_score": 0},

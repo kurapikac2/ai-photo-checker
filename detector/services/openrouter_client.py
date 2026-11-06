@@ -1,5 +1,6 @@
 import base64
 import json
+import math
 from collections import Counter
 from pathlib import Path
 
@@ -54,7 +55,9 @@ def _extract_json_payload(text_content):
 def _normalize_percentage(value):
     try:
         number = float(value)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
+        return 0
+    if not math.isfinite(number):
         return 0
     if 0 <= number <= 1:
         number *= 100
@@ -126,7 +129,7 @@ def _run_openrouter_once(encoded_image, api_key):
             return {
                 'verdict': 'uncertain',
                 'confidence': 0,
-                'reasons': [f'OpenRouter analysis failed: HTTP {response.status_code} - {response.text[:300]}'],
+                'reasons': ['External model analysis is unavailable.'],
                 'visual_signs': [],
                 'manipulation_probability': 0,
                 'ai_generation_probability': 0,
@@ -139,17 +142,32 @@ def _run_openrouter_once(encoded_image, api_key):
         else:
             text_content = content or ''
         parsed = _extract_json_payload(text_content)
+        if not isinstance(parsed, dict):
+            raise ValueError('Model response must be an object.')
+        if not isinstance(parsed.get('verdict'), str) or parsed['verdict'] not in {
+            'real', 'suspicious', 'ai_generated', 'edited', 'uncertain',
+        }:
+            parsed['verdict'] = 'uncertain'
+        for field in ('reasons', 'visual_signs'):
+            items = parsed.get(field, [])
+            parsed[field] = ([item.strip()[:300] for item in items[:8]
+                              if isinstance(item, str) and item.strip()]
+                             if isinstance(items, list) else [])
         parsed['confidence'] = _normalize_percentage(parsed.get('confidence', 0))
         parsed['ai_generation_probability'] = _normalize_percentage(parsed.get('ai_generation_probability', 0))
         parsed['manipulation_probability'] = _normalize_percentage(parsed.get('manipulation_probability', 0))
-        parsed['raw'] = data
-        parsed['raw_text'] = text_content
-        return parsed
-    except Exception as exc:
+        return {
+            field: parsed[field]
+            for field in (
+                'verdict', 'confidence', 'reasons', 'visual_signs',
+                'ai_generation_probability', 'manipulation_probability',
+            )
+        }
+    except Exception:
         return {
             'verdict': 'uncertain',
             'confidence': 0,
-            'reasons': [f'OpenRouter analysis failed: {exc}'],
+            'reasons': ['External model analysis is unavailable.'],
             'visual_signs': [],
             'manipulation_probability': 0,
             'ai_generation_probability': 0,
@@ -193,7 +211,6 @@ def _aggregate_openrouter_results(results):
         'visual_signs': unique_visual_signs[:8],
         'manipulation_probability': int(round(sum(manipulation_values) / max(1, len(manipulation_values)))),
         'ai_generation_probability': int(round(sum(ai_values) / max(1, len(ai_values)))),
-        'raw_runs': results,
         'consensus_runs': len(results),
     }
 
