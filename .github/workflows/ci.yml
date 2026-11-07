@@ -11,6 +11,10 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      # Public, non-secret test-only key. Never use this value in production.
+      DJANGO_SECRET_KEY: ci-only-development-test-key-not-for-production-1234
+      DEBUG: "False"
     strategy:
       matrix:
         python-version: ["3.11", "3.12"]
