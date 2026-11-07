@@ -1,12 +1,22 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
 
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-fake-image-checker-dev-key')
-DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
+DEBUG = os.getenv('DEBUG', 'False').strip().lower() == 'true'
+configured_secret = os.getenv('DJANGO_SECRET_KEY', '').strip()
+if DEBUG:
+    # Local development only. Never rely on this fallback with DEBUG disabled.
+    SECRET_KEY = configured_secret or 'django-insecure-fake-image-checker-local-dev-only'
+else:
+    if len(configured_secret) < 32 or configured_secret == 'change-me':
+        raise ImproperlyConfigured(
+            'Set a unique DJANGO_SECRET_KEY of at least 32 characters when DEBUG=False.'
+        )
+    SECRET_KEY = configured_secret
 ALLOWED_HOSTS = [host.strip() for host in os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',') if host.strip()]
 
 INSTALLED_APPS = [
