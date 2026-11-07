@@ -2,20 +2,14 @@ import base64
 import json
 import math
 from collections import Counter
-from pathlib import Path
 
 import requests
 from django.conf import settings
 
 
 def _load_api_key():
-    if settings.OPENROUTER_API_KEY:
-        return settings.OPENROUTER_API_KEY.strip()
-
-    txt_path = Path(settings.BASE_DIR) / 'txt'
-    if txt_path.exists():
-        return txt_path.read_text(encoding='utf-8').strip()
-    return ''
+    # Only load the API key from explicit configuration (.env or environment).
+    return (settings.OPENROUTER_API_KEY or '').strip()
 
 
 def _extract_json_payload(text_content):
