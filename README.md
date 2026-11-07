@@ -28,6 +28,8 @@ Copy-Item .env.example .env
 
 Open `.env` and configure `OPENROUTER_API_KEY` if you want the external vision-model step. Without a key, the application reports that the model check is unavailable.
 
+**Configuration safety:** The sample `.env` is for local development only (`DEBUG=True` and a placeholder key). For any non-debug deployment, use `DEBUG=False` and set a unique `DJANGO_SECRET_KEY` of at least 32 characters. The application now refuses to start in non-debug mode with a missing or placeholder secret. Set `OPENROUTER_API_KEY` in the environment or `.env`; the old fallback that read a local `txt` file has been removed. If your setup depended on that file, migrate its value into `.env` and delete the old file. Do not publish either secret.
+
 Set up the database and start Django:
 
 ```powershell
@@ -114,7 +116,7 @@ separate operator cleanup. Do not use shared browser sessions for private images
 
 - Validate model behavior against an independent labeled image dataset.
 - Add deployment-specific rate limits and schedule the retention command.
-- Remove the legacy API-key-file fallback and harden production settings.
+- Continue hardening deployment-specific settings (HTTPS, cookies, allowed hosts, logging and rate limits).
 - Publish sample results using non-sensitive images and document false positives.
 
 This repository is a learning project and a working prototype, not a forensic verification service.
