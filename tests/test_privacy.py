@@ -49,6 +49,35 @@ class AnalysisPrivacyTests(TestCase):
         self.assertContains(self.owner.get('/history/'), 'private.png')
         self.assertNotContains(self.stranger.get('/history/'), 'private.png')
 
+    def test_scores_are_labeled_as_uncalibrated_indicators(self):
+        record = self.upload()
+        response = self.owner.get(f'/result/{record.pk}/')
+        self.assertContains(response, 'Uncalibrated heuristic scores')
+        self.assertContains(response, 'AI indicator')
+        self.assertContains(response, 'not measured probabilities')
+        self.assertNotContains(response, 'AI probability')
+        self.assertNotContains(response, 'Manipulation probability')
+        self.assertContains(self.owner.get('/history/'), 'Uncalibrated scores')
+
+    def test_upload_requires_csrf_and_history_disables_caching(self):
+        client = Client(enforce_csrf_checks=True)
+        self.assertEqual(client.post('/check/').status_code, 403)
+        self.assertEqual(ImageCheck.objects.count(), 0)
+        self.assertIn('no-store', self.owner.get('/history/')['Cache-Control'])
+
+    def test_document_referrer_policy_allows_same_origin_form_posts(self):
+        # Chromium sends Origin: null on POST forms under no-referrer.
+        # same-origin preserves CSRF origin validation without cross-site referrers.
+        self.assertEqual(self.owner.get('/')['Referrer-Policy'], 'same-origin')
+
+    def test_storage_failure_preserves_record_for_retry(self):
+        record = self.upload()
+        with patch.object(record.original_image.storage, 'delete', side_effect=OSError('storage unavailable')):
+            with self.assertRaises(OSError):
+                record.delete_with_image()
+        self.assertTrue(ImageCheck.objects.filter(pk=record.pk).exists())
+        self.assertTrue(record.original_image.storage.exists(record.original_image.name))
+
     def test_image_route_checks_owner_and_disables_caching(self):
         record = self.upload()
         response = self.owner.get(f'/image/{record.pk}/')
