@@ -1,6 +1,10 @@
 {% extends 'base.html' %}
 {% block title %}Результат проверки{% endblock %}
 {% block content %}
+<p class="mb-6 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4" role="note">
+    <strong>Uncalibrated heuristic scores.</strong> These are indicators on a 0–100 scale,
+    not measured probabilities or proof of authenticity. A low score does not establish that an image is real.
+</p>
 <section class="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
     <div class="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900">
         <img src="{% url 'detector:image' image_check.pk %}" alt="Uploaded image" class="h-full w-full object-cover">
@@ -16,16 +20,16 @@
             </div>
             <div class="mt-6">
                 <div class="mb-2 flex items-center justify-between text-sm">
-                    <span class="text-slate-400">Уверенность</span>
-                    <span class="font-semibold">{{ image_check.confidence }}%</span>
+                    <span class="text-slate-400">Heuristic confidence</span>
+                    <span class="font-semibold">{{ image_check.confidence }}/100</span>
                 </div>
                 <div class="h-3 rounded-full bg-slate-800">
                     <div class="h-3 rounded-full bg-gradient-to-r from-sky-500 via-fuchsia-500 to-rose-500" style="width: {{ image_check.confidence|default:0 }}%;"></div>
                 </div>
             </div>
             <div class="mt-6 grid gap-4 sm:grid-cols-2">
-                <div class="rounded-2xl bg-slate-950/70 p-4"><p class="text-sm text-slate-400">AI probability</p><p class="mt-2 text-2xl font-bold">{{ image_check.ai_generation_probability }}%</p></div>
-                <div class="rounded-2xl bg-slate-950/70 p-4"><p class="text-sm text-slate-400">Manipulation probability</p><p class="mt-2 text-2xl font-bold">{{ image_check.manipulation_probability }}%</p></div>
+                <div class="rounded-2xl bg-slate-950/70 p-4"><p class="text-sm text-slate-400">AI indicator</p><p class="mt-2 text-2xl font-bold">{{ image_check.ai_generation_probability }}/100</p></div>
+                <div class="rounded-2xl bg-slate-950/70 p-4"><p class="text-sm text-slate-400">Editing indicator</p><p class="mt-2 text-2xl font-bold">{{ image_check.manipulation_probability }}/100</p></div>
             </div>
         </div>
 
@@ -36,7 +40,7 @@
                     <div>
                         <div class="mb-1 flex items-center justify-between text-sm">
                             <span class="text-slate-300">{{ label }}</span>
-                            <span class="font-semibold">{{ score }}%</span>
+                            <span class="font-semibold">{{ score }}/100</span>
                         </div>
                         <div class="h-2 rounded-full bg-slate-800">
                             <div class="h-2 rounded-full bg-sky-500" style="width: {{ score|default:0 }}%;"></div>

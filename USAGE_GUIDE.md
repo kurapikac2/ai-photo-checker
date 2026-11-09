@@ -1,3 +1,5 @@
+> **Historical engineering notes, not validation evidence.** Numerical examples and threshold changes below do not establish accuracy, calibration or a measured false-positive reduction. Any probability or reliability claims are superseded by [the current evaluation status](CALIBRATION.md). Use [README](README.md) for supported setup and privacy behavior.
+
 # Полное руководство по использованию Fake Image Checker
 
 ## Что проверяет система
